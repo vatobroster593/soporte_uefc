@@ -1,0 +1,27 @@
+name: soporte_uefc
+description: Sistema de soporte técnico
+
+environment:
+  sdk: ">=2.19.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  sqflite: ^2.3.0
+  path: ^1.8.3
+  intl: ^0.18.1
+  image_picker: ^1.0.4  # AGREGAR ESTA LÍNEA
+  pdf: ^3.10.4           # AGREGAR
+  path_provider: ^2.1.1  # AGREGAR
+  open_file: ^3.3.2      # AGREGAR
+  share_plus: ^7.2.1      # AGREGAR ESTA LÍNEA
+  shared_preferences: ^2.2.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
