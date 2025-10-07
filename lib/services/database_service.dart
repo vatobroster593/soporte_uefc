@@ -80,7 +80,7 @@ class DatabaseService {
     return result.first['count'] as int;
   }
 
-  // Generar número de ticket con formato TCK-C6-TICS-XXX
+  // Generar número de ticket con formato C6-TICS-TCK-XXX
   static Future<String> generarNumeroTicket() async {
     final db = await database;
     final result = await db.rawQuery('SELECT COUNT(*) as count FROM tickets');
@@ -89,10 +89,10 @@ class DatabaseService {
     // Incrementar para el nuevo ticket
     int numeroConsecutivo = totalTickets + 1;
 
-    // Formato: TCK-C6-TICS-XXX (con 3 dígitos mínimo)
+    // Formato: C6-TICS-TCK-XXX (con 3 dígitos mínimo)
     String numeroFormateado = numeroConsecutivo.toString().padLeft(3, '0');
 
-    return 'TCK-C6-TICS-$numeroFormateado';
+    return 'C6-TICS-TCK-$numeroFormateado';
   }
 
 }

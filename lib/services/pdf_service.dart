@@ -366,7 +366,7 @@ class PdfService {
       String mesAbrev = mesesAbreviados[fechaTicket.month - 1];
       String anio = fechaTicket.year.toString();
 
-      // Formato: TCK-C6-TICS-001-ene-2025.pdf
+      // Formato: C6-TICS-TCK-001-oct-2025.pdf
       String nombreArchivo = '${ticket['numero_ticket']}-$mesAbrev-$anio.pdf';
 
       final file = File('${output.path}/$nombreArchivo');
@@ -502,14 +502,34 @@ class PdfService {
             color: PdfColors.black,
           ),
         ),
-        pw.Text(
-          cargo,
-          style: pw.TextStyle(
-            fontSize: 9,
-            color: PdfColors.grey600,
-            fontStyle: pw.FontStyle.italic,
+        // Si es el campo de confirmación, agregar recuadro
+        if (cargo == 'Confirmado mediante Cédula')
+          pw.Container(
+            margin: pw.EdgeInsets.only(top: 5),
+            padding: pw.EdgeInsets.all(6),
+            decoration: pw.BoxDecoration(
+              border: pw.Border.all(color: PdfColors.grey700, width: 1),
+              borderRadius: pw.BorderRadius.circular(4),
+              color: PdfColors.grey100,
+            ),
+            child: pw.Text(
+              'Confirmado mediante\ningreso de Cédula\nde Identidad',
+              style: pw.TextStyle(
+                fontSize: 8,
+                color: PdfColors.grey800,
+              ),
+              textAlign: pw.TextAlign.center,
+            ),
+          )
+        else
+          pw.Text(
+            cargo,
+            style: pw.TextStyle(
+              fontSize: 9,
+              color: PdfColors.grey600,
+              fontStyle: pw.FontStyle.italic,
+            ),
           ),
-        ),
       ],
     );
   }
