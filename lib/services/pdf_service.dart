@@ -99,44 +99,51 @@ class PdfService {
     if (ticket['foto_antes'] != null && ticket['foto_antes'] != '') {
       try {
         final fileAntes = File(ticket['foto_antes']);
-        if (fileAntes.existsSync()) {
-          imagenAntes = pw.MemoryImage(fileAntes.readAsBytesSync());
+        if (await fileAntes.exists()) {
+          final bytes = await fileAntes.readAsBytes();
+          imagenAntes = pw.MemoryImage(bytes);
+          print('✅ Foto ANTES cargada: ${ticket['foto_antes']}');
+        } else {
+          print('⚠️ Archivo foto ANTES no existe: ${ticket['foto_antes']}');
         }
       } catch (e) {
-        print('Error cargando foto antes: $e');
+        print('❌ Error cargando foto antes: $e');
       }
     }
 
     if (ticket['foto_despues'] != null && ticket['foto_despues'] != '') {
       try {
         final fileDespues = File(ticket['foto_despues']);
-        if (fileDespues.existsSync()) {
-          imagenDespues = pw.MemoryImage(fileDespues.readAsBytesSync());
+        if (await fileDespues.exists()) {
+          final bytes = await fileDespues.readAsBytes();
+          imagenDespues = pw.MemoryImage(bytes);
+          print('✅ Foto DESPUÉS cargada: ${ticket['foto_despues']}');
+        } else {
+          print('⚠️ Archivo foto DESPUÉS no existe: ${ticket['foto_despues']}');
         }
       } catch (e) {
-        print('Error cargando foto después: $e');
+        print('❌ Error cargando foto después: $e');
       }
     }
 
     // Obtener el encabezado
     final encabezado = await crearEncabezadoInstitucional();
 
-    // Crear página del PDF
+    // Crear página del PDF usando MultiPage para mejor manejo de espacio
     pdf.addPage(
-      pw.Page(
+      pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
         margin: pw.EdgeInsets.symmetric(horizontal: 40, vertical: 30),
         build: (pw.Context context) {
-          return pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.center,
-            children: [
-              // ENCABEZADO INSTITUCIONAL CENTRADO
-              encabezado,
+          return [
+            // ENCABEZADO INSTITUCIONAL CENTRADO
+            pw.Center(child: encabezado),
 
-              pw.SizedBox(height: 25),
+            pw.SizedBox(height: 25),
 
-              // TÍTULO DEL DOCUMENTO
-              pw.Text(
+            // TÍTULO DEL DOCUMENTO
+            pw.Center(
+              child: pw.Text(
                 'REPORTE DE SOPORTE TÉCNICO',
                 style: pw.TextStyle(
                   fontSize: 18,
@@ -144,11 +151,13 @@ class PdfService {
                   color: PdfColors.grey900,
                 ),
               ),
+            ),
 
-              pw.SizedBox(height: 8),
+            pw.SizedBox(height: 8),
 
-              // Número de Ticket
-              pw.Container(
+            // Número de Ticket
+            pw.Center(
+              child: pw.Container(
                 padding: pw.EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                 decoration: pw.BoxDecoration(
                   color: PdfColors.grey200,
@@ -163,168 +172,172 @@ class PdfService {
                   ),
                 ),
               ),
+            ),
 
-              pw.SizedBox(height: 25),
+            pw.SizedBox(height: 25),
 
-              // CONTENIDO EN SECCIONES UNIFORMES
+            // CONTENIDO EN SECCIONES UNIFORMES
 
-              // SECCIÓN 1: INFORMACIÓN GENERAL
-              _crearSeccion(
-                'INFORMACIÓN GENERAL',
-                [
-                  _crearFilaInfo('Fecha de atención:', fechaFormateada),
-                  _crearFilaInfo('Hora de atención:', horaFormateada),
-                  _crearFilaInfo('Técnico responsable:', 'Analista TICs - Soporte Técnico'),
-                ],
-              ),
-
-              pw.SizedBox(height: 15),
-
-              // SECCIÓN 2: DATOS DEL USUARIO
-              _crearSeccion(
-                'DATOS DEL USUARIO',
-                [
-                  _crearFilaInfo('Grado/Título:', ticket['grado'] ?? ''),
-                  _crearFilaInfo('Nombre completo:', ticket['nombre'] ?? ''),
-                  _crearFilaInfo('Cargo:', ticket['cargo'] ?? ''),
-                ],
-              ),
-
-              pw.SizedBox(height: 15),
-
-              // SECCIÓN 3: DETALLE DEL PROBLEMA
-              _crearSeccion(
-                'DETALLE DEL PROBLEMA',
-                [
-                  _crearFilaInfo('Tipo de problema:', ticket['tipo_problema'] ?? ''),
-                  _crearFilaInfo('Descripción:', ticket['problema'] ?? '', esTextoLargo: true),
-                ],
-              ),
-
-              pw.SizedBox(height: 15),
-
-              // SECCIÓN 4: SOLUCIÓN APLICADA
-              _crearSeccion(
-                'SOLUCIÓN APLICADA',
-                [
-                  _crearFilaInfo('Acciones realizadas:', ticket['solucion'] ?? '', esTextoLargo: true),
-                  _crearFilaInfo('Estado:', 'RESUELTO Y COMPLETADO'),
-                ],
-              ),
-
-              pw.SizedBox(height: 15),
-
-              // SECCIÓN 5: CONFIRMACIÓN DE RECEPCIÓN
-              _crearSeccion(
-                'CONFIRMACIÓN DE RECEPCIÓN',
-                [
-                  _crearFilaInfo('Método de confirmación:', 'Cédula de Identidad'),
-                  _crearFilaInfo('Documento:', ticket['cedula_confirmacion'] ?? 'N/A'),
-                  _crearFilaInfo('Estado de conformidad:', 'SERVICIO RECIBIDO CONFORME'),
-                ],
-              ),
-
-              // EVIDENCIA FOTOGRÁFICA (si existe)
-              if (imagenAntes != null || imagenDespues != null) ...[
-                pw.SizedBox(height: 20),
-                pw.Container(
-                  width: double.infinity,
-                  padding: pw.EdgeInsets.all(15),
-                  decoration: pw.BoxDecoration(
-                    border: pw.Border.all(color: PdfColors.grey400),
-                    borderRadius: pw.BorderRadius.circular(8),
-                  ),
-                  child: pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Text(
-                        'EVIDENCIA FOTOGRÁFICA',
-                        style: pw.TextStyle(
-                          fontSize: 12,
-                          fontWeight: pw.FontWeight.bold,
-                          color: PdfColors.grey800,
-                        ),
-                      ),
-                      pw.SizedBox(height: 15),
-                      pw.Row(
-                        mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
-                        children: [
-                          if (imagenAntes != null)
-                            pw.Column(
-                              children: [
-                                pw.Text(
-                                  'ANTES',
-                                  style: pw.TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: pw.FontWeight.bold,
-                                    color: PdfColors.grey700,
-                                  ),
-                                ),
-                                pw.SizedBox(height: 5),
-                                pw.Container(
-                                  width: 180,
-                                  height: 135,
-                                  decoration: pw.BoxDecoration(
-                                    border: pw.Border.all(color: PdfColors.grey400),
-                                  ),
-                                  child: pw.Image(imagenAntes, fit: pw.BoxFit.contain),
-                                ),
-                              ],
-                            ),
-                          if (imagenDespues != null)
-                            pw.Column(
-                              children: [
-                                pw.Text(
-                                  'DESPUÉS',
-                                  style: pw.TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: pw.FontWeight.bold,
-                                    color: PdfColors.grey700,
-                                  ),
-                                ),
-                                pw.SizedBox(height: 5),
-                                pw.Container(
-                                  width: 180,
-                                  height: 135,
-                                  decoration: pw.BoxDecoration(
-                                    border: pw.Border.all(color: PdfColors.grey400),
-                                  ),
-                                  child: pw.Image(imagenDespues, fit: pw.BoxFit.contain),
-                                ),
-                              ],
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
+            // SECCIÓN 1: INFORMACIÓN GENERAL
+            _crearSeccion(
+              'INFORMACIÓN GENERAL',
+              [
+                _crearFilaInfo('Fecha de atención:', fechaFormateada),
+                _crearFilaInfo('Hora de atención:', horaFormateada),
+                _crearFilaInfo('Técnico responsable:', 'Analista TICs - Soporte Técnico'),
               ],
+            ),
 
-              pw.Spacer(),
+            pw.SizedBox(height: 15),
 
-              // SECCIÓN DE FIRMAS
+            // SECCIÓN 2: DATOS DEL USUARIO
+            _crearSeccion(
+              'DATOS DEL USUARIO',
+              [
+                _crearFilaInfo('Grado/Título:', ticket['grado'] ?? ''),
+                _crearFilaInfo('Nombre completo:', ticket['nombre'] ?? ''),
+                _crearFilaInfo('Cargo:', ticket['cargo'] ?? ''),
+              ],
+            ),
+
+            pw.SizedBox(height: 15),
+
+            // SECCIÓN 3: DETALLE DEL PROBLEMA
+            _crearSeccion(
+              'DETALLE DEL PROBLEMA',
+              [
+                _crearFilaInfo('Tipo de problema:', ticket['tipo_problema'] ?? ''),
+                _crearFilaInfo('Descripción:', ticket['problema'] ?? '', esTextoLargo: true),
+              ],
+            ),
+
+            pw.SizedBox(height: 15),
+
+            // SECCIÓN 4: SOLUCIÓN APLICADA
+            _crearSeccion(
+              'SOLUCIÓN APLICADA',
+              [
+                _crearFilaInfo('Acciones realizadas:', ticket['solucion'] ?? '', esTextoLargo: true),
+                _crearFilaInfo('Estado:', 'RESUELTO Y COMPLETADO'),
+              ],
+            ),
+
+            pw.SizedBox(height: 15),
+
+            // SECCIÓN 5: CONFIRMACIÓN DE RECEPCIÓN
+            _crearSeccion(
+              'CONFIRMACIÓN DE RECEPCIÓN',
+              [
+                _crearFilaInfo('Método de confirmación:', 'Cédula de Identidad'),
+                _crearFilaInfo('Documento:', ticket['cedula_confirmacion'] ?? 'N/A'),
+                _crearFilaInfo('Estado de conformidad:', 'SERVICIO RECIBIDO CONFORME'),
+              ],
+            ),
+
+            pw.SizedBox(height: 20),
+
+            // EVIDENCIA FOTOGRÁFICA (si existe)
+            if (imagenAntes != null || imagenDespues != null) ...[
               pw.Container(
-                margin: pw.EdgeInsets.only(top: 30),
-                child: pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
+                width: double.infinity,
+                padding: pw.EdgeInsets.all(15),
+                decoration: pw.BoxDecoration(
+                  border: pw.Border.all(color: PdfColors.grey400),
+                  borderRadius: pw.BorderRadius.circular(8),
+                ),
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
-                    _crearCampoFirma(
-                      'USUARIO',
-                      '${ticket['grado']} ${ticket['nombre']}',
-                      'C.I. ${ticket['cedula_confirmacion']}',
+                    pw.Text(
+                      'EVIDENCIA FOTOGRÁFICA',
+                      style: pw.TextStyle(
+                        fontSize: 12,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColors.grey800,
+                      ),
                     ),
-                    _crearCampoFirma(
-                      'TÉCNICO DE SOPORTE',
-                      'Analista TICs',
-                      'Dpto. Tecnología',
+                    pw.SizedBox(height: 15),
+                    pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
+                      children: [
+                        if (imagenAntes != null)
+                          pw.Column(
+                            children: [
+                              pw.Text(
+                                'ANTES',
+                                style: pw.TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: pw.FontWeight.bold,
+                                  color: PdfColors.grey700,
+                                ),
+                              ),
+                              pw.SizedBox(height: 5),
+                              pw.Container(
+                                width: 200,
+                                height: 150,
+                                decoration: pw.BoxDecoration(
+                                  border: pw.Border.all(color: PdfColors.grey400),
+                                ),
+                                child: pw.Image(imagenAntes, fit: pw.BoxFit.cover),
+                              ),
+                            ],
+                          ),
+                        if (imagenDespues != null)
+                          pw.Column(
+                            children: [
+                              pw.Text(
+                                'DESPUÉS',
+                                style: pw.TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: pw.FontWeight.bold,
+                                  color: PdfColors.grey700,
+                                ),
+                              ),
+                              pw.SizedBox(height: 5),
+                              pw.Container(
+                                width: 200,
+                                height: 150,
+                                decoration: pw.BoxDecoration(
+                                  border: pw.Border.all(color: PdfColors.grey400),
+                                ),
+                                child: pw.Image(imagenDespues, fit: pw.BoxFit.cover),
+                              ),
+                            ],
+                          ),
+                      ],
                     ),
                   ],
                 ),
               ),
+              pw.SizedBox(height: 30),
+            ],
 
-              pw.SizedBox(height: 20),
+            // SECCIÓN DE FIRMAS - Siempre visible
+            pw.Container(
+              margin: pw.EdgeInsets.only(top: 20),
+              child: pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
+                children: [
+                  _crearCampoFirma(
+                    'USUARIO',
+                    '${ticket['grado']} ${ticket['nombre']}',
+                    'C.I. ${ticket['cedula_confirmacion']}',
+                  ),
+                  _crearCampoFirma(
+                    'TÉCNICO DE SOPORTE',
+                    'Analista TICs',
+                    'Dpto. Tecnología',
+                  ),
+                ],
+              ),
+            ),
 
-              // PIE DE PÁGINA
+            pw.SizedBox(height: 20),
+          ];
+        },
+        footer: (pw.Context context) {
+          return pw.Column(
+            children: [
               pw.Divider(color: PdfColors.grey400),
               pw.SizedBox(height: 10),
               pw.Text(
@@ -334,6 +347,7 @@ class PdfService {
                   color: PdfColors.grey600,
                   fontStyle: pw.FontStyle.italic,
                 ),
+                textAlign: pw.TextAlign.center,
               ),
             ],
           );

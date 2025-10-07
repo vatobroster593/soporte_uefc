@@ -3,7 +3,8 @@ import '../services/database_service.dart';
 import '../services/pdf_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import 'home_screen.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
 
 class NuevoTicketScreen extends StatefulWidget {
   @override
@@ -18,7 +19,6 @@ class _NuevoTicketScreenState extends State<NuevoTicketScreen> {
   final _cargoController = TextEditingController();
   final _problemaController = TextEditingController();
   final _solucionController = TextEditingController();
-  final _pinController = TextEditingController();
 
   // Variables para las fotos
   File? _fotoAntes;
@@ -64,8 +64,23 @@ class _NuevoTicketScreenState extends State<NuevoTicketScreen> {
     );
 
     if (foto != null) {
+      // Guardar en directorio permanente de la app
+      final Directory appDir = await getApplicationDocumentsDirectory();
+      final String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+      final String fileName = 'foto_antes_$timestamp.jpg';
+      final String permanentPath = path.join(appDir.path, 'fotos', fileName);
+
+      // Crear directorio si no existe
+      final Directory fotosDir = Directory(path.join(appDir.path, 'fotos'));
+      if (!await fotosDir.exists()) {
+        await fotosDir.create(recursive: true);
+      }
+
+      // Copiar archivo a ubicación permanente
+      final File permanentFile = await File(foto.path).copy(permanentPath);
+
       setState(() {
-        _fotoAntes = File(foto.path);
+        _fotoAntes = permanentFile;
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -84,8 +99,23 @@ class _NuevoTicketScreenState extends State<NuevoTicketScreen> {
     );
 
     if (foto != null) {
+      // Guardar en directorio permanente de la app
+      final Directory appDir = await getApplicationDocumentsDirectory();
+      final String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+      final String fileName = 'foto_despues_$timestamp.jpg';
+      final String permanentPath = path.join(appDir.path, 'fotos', fileName);
+
+      // Crear directorio si no existe
+      final Directory fotosDir = Directory(path.join(appDir.path, 'fotos'));
+      if (!await fotosDir.exists()) {
+        await fotosDir.create(recursive: true);
+      }
+
+      // Copiar archivo a ubicación permanente
+      final File permanentFile = await File(foto.path).copy(permanentPath);
+
       setState(() {
-        _fotoDespues = File(foto.path);
+        _fotoDespues = permanentFile;
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
