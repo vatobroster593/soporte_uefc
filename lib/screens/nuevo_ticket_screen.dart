@@ -465,8 +465,8 @@ class _NuevoTicketScreenState extends State<NuevoTicketScreen> {
             ElevatedButton(
               onPressed: () async {
                 if (_cedulaConfirmacionController.text.length >= 10) {
-                  // Generar número de ticket
-                  String numeroTicket = 'TK${DateTime.now().millisecondsSinceEpoch}'.substring(0, 10);
+                  // Generar número de ticket con nuevo formato
+                  String numeroTicket = await DatabaseService.generarNumeroTicket();
 
                   // Guardar en base de datos
                   await DatabaseService.guardarTicket({

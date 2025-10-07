@@ -321,7 +321,7 @@ class PdfService {
                   _crearCampoFirma(
                     'USUARIO',
                     '${ticket['grado']} ${ticket['nombre']}',
-                    'C.I. ${ticket['cedula_confirmacion']}',
+                    'Confirmado mediante Cédula',
                   ),
                   _crearCampoFirma(
                     'TÉCNICO DE SOPORTE',
@@ -341,7 +341,7 @@ class PdfService {
               pw.Divider(color: PdfColors.grey400),
               pw.SizedBox(height: 10),
               pw.Text(
-                'Departamento de Tecnología - UEFC - Riobamba, Ecuador',
+                'Departamento de Tecnología - COMIL6 - Riobamba, Ecuador',
                 style: pw.TextStyle(
                   fontSize: 10,
                   color: PdfColors.grey600,
@@ -358,7 +358,18 @@ class PdfService {
     // Guardar y abrir PDF
     try {
       final output = await getTemporaryDirectory();
-      final file = File('${output.path}/ticket_${ticket['numero_ticket']}.pdf');
+
+      // Obtener mes en español (3 primeras letras) y año
+      DateTime fechaTicket = DateTime.parse(ticket['fecha']);
+      List<String> mesesAbreviados = ['ene', 'feb', 'mar', 'abr', 'may', 'jun',
+                                       'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+      String mesAbrev = mesesAbreviados[fechaTicket.month - 1];
+      String anio = fechaTicket.year.toString();
+
+      // Formato: TCK-C6-TICS-001-ene-2025.pdf
+      String nombreArchivo = '${ticket['numero_ticket']}-$mesAbrev-$anio.pdf';
+
+      final file = File('${output.path}/$nombreArchivo');
       await file.writeAsBytes(await pdf.save());
 
       if (abrir) {
@@ -625,7 +636,7 @@ class PdfService {
             pw.Divider(color: PdfColors.grey400),
             pw.SizedBox(height: 10),
             pw.Text(
-              'Departamento de Tecnología - UEFC - Riobamba, Ecuador',
+              'Departamento de Tecnología - COMIL6 - Riobamba, Ecuador',
               style: pw.TextStyle(
                 fontSize: 10,
                 color: PdfColors.grey600,
